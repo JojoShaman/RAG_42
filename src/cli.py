@@ -304,3 +304,12 @@ class CLI:
             validation_err_output(e.errors())
         except (ValueError, OSError) as e:
             print(e, file=sys.stderr)
+
+    def serve(self, host: str, port: int) -> None:
+        import uvicorn
+        from .app import build_app
+        from .answer import load_qwen
+        tokenizer, model = load_qwen()
+        bm25: BM25 = BM25(corpus=self._load_corpus(), k1=1.5, b=0.75)
+        app = build_app(bm25, tokenizer, model)
+        uvicorn.run(app, host=host, port=port)
