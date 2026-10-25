@@ -1,0 +1,43 @@
+[project]
+name = "RAG"
+version = "0.1.0"
+description = "Retrieval Augmented Generation program"
+authors = [
+    {name = "Sorin Rosu", email = "srosu@student.42belgium.be"}
+]
+requires-python = ">=3.10"
+dependencies = [
+    "transformers>=5.20.2",
+    "fire>=0.7.1",
+    "pydantic>=2.13.4",
+    "tqdm>=4.70.1",
+    "torch>=2.14.1"
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+    {index = "pytorch-cpu", marker = "sys_platform == 'linux'"}
+]
+
+[[tool.mypy.overrides]]
+module = ["fire"]
+ignore_missing_imports = true
+
+[dependency-groups]
+dev = [
+    "flake8",
+    "mypy",
+    "Flake8-pyproject",
+    "types-tqdm>=4.70.0.20260906",
+]
+
+[tool.mypy]
+exclude = ["data/"]
+
+[tool.flake8]
+exclude = [".venv", "data", "__pycache__", ".mypy_cache"]
