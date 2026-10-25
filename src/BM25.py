@@ -5,11 +5,27 @@ from .models import Corpus, Chunk
 
 
 class BM25(BaseModel):
+    """Okapi BM25 ranking over an indexed corpus.
+
+        Attributes:
+            corpus: Indexed chunks with their document frequencies.
+            k1: Term frequency saturation parameter.
+            b: Length normalization parameter, between 0 and 1.
+    """
     corpus: Corpus
     k1: float
     b: float
 
     def bm25_score(self, query: str, k: int = 1) -> list[tuple[float, Chunk]]:
+        """Rank the corpus chunks against a query.
+
+            Args:
+                query: Raw query text, tokenized like the chunks.
+                k: Number of results to return.
+
+            Returns:
+                The k best (score, chunk) pairs, by decreasing score.
+        """
         score: list[tuple[float, Chunk]] = []
         freq: int = 0
         k1 = self.k1

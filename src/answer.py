@@ -10,6 +10,11 @@ MODEL_NAME = "Qwen/Qwen3-0.6B"
 
 
 def load_qwen() -> tuple[PreTrainedTokenizerBase, PreTrainedModel]:
+    """Load the Qwen3-0.6B tokenizer and model.
+
+        Returns:
+            A (tokenizer, model) tuple ready for generation.
+    """
     tokenizer: PreTrainedTokenizerBase = (
         AutoTokenizer.from_pretrained(MODEL_NAME))
     model: PreTrainedModel = (
@@ -20,6 +25,25 @@ def load_qwen() -> tuple[PreTrainedTokenizerBase, PreTrainedModel]:
 def generate_answer(query: str, sources: list[tuple[str, str]],
                     tokenizer: PreTrainedTokenizerBase,
                     model: PreTrainedModel) -> str:
+    """Generate a grounded answer to a question with Qwen.
+
+        The sources are formatted as a numbered context and passed to the
+        model with instructions to answer in one sentence, using only that
+        context.
+
+        Args:
+            query: The user's question.
+            sources: (file_path, text) pairs used as context.
+            tokenizer: Tokenizer of the generation model.
+            model: Generation model.
+
+        Returns:
+            The generated answer, without the prompt.
+
+        Raises:
+            TypeError: If the tokenizer or the model returns an
+                unexpected type.
+    """
     system_context: str = (
         "You answer questions about the vLLM"
         " codebase using only the provided context. The answer should"

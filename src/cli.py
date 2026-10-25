@@ -24,7 +24,14 @@ INDEX_PATH = "data/processed/corpus_index.json"
 
 
 class CLI:
+    """Command-line interface of the RAG system, exposed with Fire."""
     def index(self, max_chunk_size: int = 2000) -> None:
+        """Index data/raw/ and save the corpus under data/processed/.
+
+        Args:
+            max_chunk_size: Maximum chunk size in characters, clamped
+                between 100 and 2000.
+        """
         try:
             _size: int = validate_max_chunk_size(max_chunk_size)
             if _size < 100 or _size > 2000:
@@ -48,6 +55,12 @@ class CLI:
             print(e, file=sys.stderr)
 
     def search(self, query: str, k: int = 10) -> None:
+        """Print the top-k sources for a single query.
+
+        Args:
+            query: Question to search for.
+            k: Number of sources to return.
+        """
         try:
             query = validate_query(query)
             k = validate_k(k)
@@ -70,12 +83,31 @@ class CLI:
             print(e, file=sys.stderr)
 
     def _load_corpus(self) -> Corpus:
+        """Load the saved index.
+
+        Returns:
+            The indexed corpus.
+
+        Raises:
+            OSError: If the index file cannot be read.
+            ValidationError: If the index file is malformed.
+        """
         with open(INDEX_PATH, "r") as f:
             corpus: Corpus = Corpus.model_validate_json(f.read())
         return corpus
 
     def search_dataset(self, dataset_path: str,
                        save_directory: str, k: int = 10) -> None:
+        """Search every question of a dataset and save the results.
+
+        The results are written to save_directory under the dataset's
+        file name, as a StudentSearchResults JSON file.
+
+        Args:
+            dataset_path: Path to an UnansweredQuestions dataset.
+            save_directory: Output directory.
+            k: Number of sources per question.
+        """
         try:
             k = validate_k(k)
             corpus = self._load_corpus()
@@ -119,6 +151,12 @@ class CLI:
             print(e, file=sys.stderr)
 
     def answer(self, query: str, k: int = 5) -> None:
+        """Answer a single query from its top-k retrieved sources.
+
+        Args:
+            query: Question to answer.
+            k: Number of sources given to the model, at most 10.
+        """
         try:
             query = validate_query(query)
             k = validate_k(k)
@@ -145,6 +183,18 @@ class CLI:
 
     def answer_dataset(self, student_search_results_path: str,
                        save_directory: str, k: int = 3) -> None:
+        """Generate answers for a search results file and save them.
+
+        The answers are written to save_directory as a
+        StudentSearchResultsAndAnswer JSON file.
+
+        Args:
+            student_search_results_path: Path to a search_dataset
+                output file.
+            save_directory: Output directory.
+            k: Number of sources given to the model per question,
+                at most 10.
+        """
         try:
             k = validate_k(k)
             if k > 10:
@@ -192,6 +242,17 @@ class CLI:
 
     def evaluate(self, student_search_results_path: str,
                  dataset_path: str) -> None:
+        """Print recall@1, @3, @5 and @10 of a search results file.
+
+        A reference source counts as found when a retrieved source is
+        in the same file with an IoU above 0.05.
+
+        Args:
+            student_search_results_path: Path to a search_dataset
+                output file.
+            dataset_path: Path to the matching AnsweredQuestions
+                dataset.
+        """
         try:
             with open(student_search_results_path, "r") as f:
                 ssr = StudentSearchResults.model_validate_json(f.read())

@@ -13,6 +13,17 @@ EXTS = {".py", ".md", ".txt"}
 
 
 def load_repo(root: str) -> list[dict[str, str]]:
+    """Load the indexable files of a repository.
+
+    Only .py, .md and .txt files are kept. Files under SKIP_DIRS and
+    files that are not valid UTF-8 are skipped.
+
+    Args:
+        root: Directory to scan recursively.
+
+    Returns:
+        Documents as {"path": ..., "text": ...} dicts.
+    """
     docs: list[dict[str, str]] = []
     for path in Path(root).rglob('*'):
         if not path.is_file() or path.suffix not in EXTS:

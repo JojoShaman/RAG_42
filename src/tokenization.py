@@ -2,6 +2,15 @@ import re
 
 
 def snake_case(s: str) -> list[str]:
+    """Split a snake_case identifier into its parts.
+
+    Args:
+        s: Identifier to split.
+
+    Returns:
+        The parts of s, [s] if it starts or ends with an underscore,
+        or an empty list if it contains no underscore.
+    """
     if s.startswith("_") or s.endswith("_"):
         return [s]
     parts: list[str] = s.split("_")
@@ -11,6 +20,17 @@ def snake_case(s: str) -> list[str]:
 
 
 def camel_case(s: str) -> list[str]:
+    """Split a camelCase or PascalCase identifier into words.
+
+    Runs of capitals are kept together, so "LLMEngine" gives
+    ["LLM", "Engine"].
+
+    Args:
+        s: Identifier to split.
+
+    Returns:
+        The words of s.
+    """
     ret: list[str] = []
     i = 0
     while i < len(s):
@@ -34,6 +54,14 @@ def camel_case(s: str) -> list[str]:
 
 
 def process_token(token: str) -> list[str]:
+    """Return the sub-words of an identifier.
+
+    Args:
+        token: Word to split.
+
+    Returns:
+        The snake_case or camelCase parts of token, or an empty list.
+    """
     proccessed: list[str] = []
     if re.search(r"[A-Z_]", token):
         if "_" in token:
@@ -46,6 +74,18 @@ def process_token(token: str) -> list[str]:
 
 
 def tokenizer(text: str) -> list[str]:
+    """Tokenize a text for BM25.
+
+    Words are extracted, compound identifiers are split, and every
+    token is lowercased. Each identifier is kept whole as well as
+    split into its parts. Stopwords are removed.
+
+    Args:
+        text: Text to tokenize.
+
+    Returns:
+        The tokens, duplicates included.
+    """
     isolated: list[str] = re.findall(r"\w+", text)
     tokenized: list[str] = []
     for token in isolated:

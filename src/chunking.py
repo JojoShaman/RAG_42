@@ -8,6 +8,14 @@ Zones = list[tuple[int, int, str]]
 
 
 def init_tokens(chunk: str) -> dict[str, int]:
+    """Count the occurrences of each token in a text.
+
+    Args:
+        chunk: Text to tokenize.
+
+    Returns:
+        A mapping from each token to its number of occurrences.
+    """
     ret: dict[str, int] = {}
     t = tokenizer(chunk)
     for token in t:
@@ -19,6 +27,20 @@ def init_tokens(chunk: str) -> dict[str, int]:
 
 
 def chunk_file(doc: dict[str, str], max_size: int = 2000) -> list[Chunk]:
+    """Split a document into chunks of at most max_size characters.
+
+    The file extension selects the zoning strategy (Python or
+    Markdown/text). Zones larger than max_size are split further on
+    line boundaries.
+
+    Args:
+        doc: Document with "path" and "text" keys.
+        max_size: Maximum chunk size, in characters.
+
+    Returns:
+        The document's chunks, with their character offsets, text,
+    context and token counts.
+    """
     lines = doc["text"].splitlines(keepends=True)
     if not lines:
         return []
@@ -54,6 +76,23 @@ def chunk_file(doc: dict[str, str], max_size: int = 2000) -> list[Chunk]:
 def segment_zone(lines: list[str], offset: list[int],
                  max_size: int, start: int,
                  end: int, context: str) -> Zones:
+    """Split a zone into ranges of at most max_size characters.
+
+    Ranges end on line boundaries, with a one-line overlap between
+    consecutive ranges. A single line longer than max_size is cut
+    into fixed-size slices.
+
+    Args:
+        lines: File lines, with line endings kept.
+        offset: Character offset of the start of each line.
+        max_size: Maximum range size, in characters.
+        start: Index of the first line of the zone.
+        end: Index of the line following the zone.
+        context: Context attached to every range.
+
+    Returns:
+        (first_character, last_character, context) tuples.
+    """
     i = start
     zones: list[tuple[int, int, str]] = []
     while i < end:
@@ -78,6 +117,20 @@ def segment_zone(lines: list[str], offset: list[int],
 
 
 def py_zones(lines: list[str], offset: list[int]) -> Zones:
+    """Find the logical zones of a Python file using its AST.
+
+    Each top-level function or class, decorators included, becomes a
+    zone with a "def name" or "class Name" context. Consecutive
+    module-level statements are grouped into zones with an empty
+    context. A file that fails to parse becomes a single zone.
+
+    Args:
+        lines: File lines, with line endings kept.
+        offset: Character offset of the start of each line.
+
+    Returns:
+        (first_character, last_character, context) tuples.
+    """
     code = "".join(lines)
     zone_type = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
     no_context: dict[str, int] = {}
@@ -110,6 +163,20 @@ def py_zones(lines: list[str], offset: list[int]) -> Zones:
 
 
 def md_zones(lines: list[str], offset: list[int]) -> Zones:
+    """Find the sections of a Markdown file.
+
+    A new zone starts at every heading outside code blocks. Each
+    zone's context is the path of its headings, e.g.
+    "LoRA -> Serving". Text before the first heading forms its own
+    zone.
+
+    Args:
+        lines: File lines, with line endings kept.
+        offset: Character offset of the start of each line.
+
+    Returns:
+        (first_character, last_character, context) tuples.
+    """
     in_bash: bool = False
     zones: list[tuple[int, int, str]] = []
     title: deque[tuple[int, str]] = deque()
@@ -139,6 +206,15 @@ def md_zones(lines: list[str], offset: list[int]) -> Zones:
 
 
 def txt_zones(lines: list[str], offset: list[int]) -> Zones:
+    """Return the whole text file as a single zone.
+
+    Args:
+        lines: File lines, with line endings kept.
+        offset: Character offset of the start of each line.
+
+    Returns:
+        A single (first_character, last_character, context) tuple.
+    """
     return [(offset[0], offset[len(lines)], "")]
 
 
